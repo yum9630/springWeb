@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mvc="http://www.springframework.org/schema/mvc" 
+	xmlns:mybatis="http://mybatis.org/schema/mybatis-spring"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xsi:schemaLocation="http://www.springframework.org/schema/mvc 
+		http://www.springframework.org/schema/mvc/spring-mvc.xsd
+		http://www.springframework.org/schema/beans 
+		http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context 
+		http://www.springframework.org/schema/context/spring-context.xsd
+		http://mybatis.org/schema/mybatis-spring
+		http://mybatis.org/schema/mybatis-spring.xsd
+		http://www.springframework.org/schema/tx
+		http://www.springframework.org/schema/tx/spring-tx.xsd
+		http://www.springframework.org/schema/aop 
+		http://www.springframework.org/schema/aop/spring-aop.xsd">
+
+	<context:component-scan base-package="spring.web"/>
+	<mvc:annotation-driven/>
+	<bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<property name="prefix" value="/WEB-INF/views/"/>
+		<property name="suffix" value=".jsp"/>
+	</bean>
+	
+	<!-- ch10: mail -->
+	<bean id="mailSender" class="org.springframework.mail.javamail.JavaMailSenderImpl">
+		<property name="username" value="saradapang"/>
+		<property name="password" value="fldhmxaaawremuby"/>
+		<property name="javaMailProperties">
+		<props>
+			<prop key="mail.smtp.starttls.enable">true</prop>
+			<prop key="mail.smtp.host">smtp.gmail.com</prop>
+			<prop key="mail.smtp.port">465</prop>
+			<prop key="mail.smtp.socketFactory.class">javax.net.ssl.SSLSocketFactory</prop>
+			<prop key="mail.smtp.socketFactory.port">465</prop>
+			<prop key="mail.smtp.socketFactory.fallback">false</prop>
+			<prop key="mail.smtp.auth">true</prop>
+		</props>
+		</property>
+	</bean>
+	
+	<!-- ch09.ex02 : interceptor -->
+	<bean id="loginInterceptor" class="spring.web.ch09.ex02.LoginInterceptor"></bean>
+	<mvc:interceptors>
+		<mvc:interceptor>
+			<mvc:mapping path="/ch09/ex02/**"/>
+			<ref bean="loginInterceptor"/>
+		</mvc:interceptor>
+	</mvc:interceptors>
+	<!-- ch09.ex01 : interceptor -->
+	<bean id="consoleInterceptor" class="spring.web.ch09.ex01.ConsoleInterceptor"></bean>
+	<mvc:interceptors>
+		<mvc:interceptor>
+			<mvc:mapping path="/ch09/ex01/**"/>
+			<ref bean="consoleInterceptor"/>
+		</mvc:interceptor>
+	</mvc:interceptors>
+	
+	<!-- ch07: @Transactional -->
+	<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource"/>
+	</bean>
+	<tx:annotation-driven transaction-manager="transactionManager"/>
+	
+	<aop:aspectj-autoproxy/>
+	
+	<!-- ch06: file upload -->
+	<bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver"/>
+	<context:property-placeholder location="classpath:spring/web/ch06/config/upload.properties"/>
+	<mvc:resources mapping="/upload/**" location="/upload/" />
+	
+	<!-- ch05:ajax -->
+	<bean class="org.springframework.web.servlet.mvc.annotation.AnnotationMethodHandlerAdapter">
+		<property name="messageConverters">
+			<list>
+				<bean class="org.springframework.http.converter.json.MappingJacksonHttpMessageConverter"/>
+			</list>
+		</property>
+	</bean>
+	
+	<!-- ch04:mybatis -->
+	<bean id="dataSource" class="org.springframework.jndi.JndiObjectFactoryBean">
+		<property name="jndiName" value="java:comp/env/jdbc/hr"/>
+		<property name="resourceRef" value="true"/>
+	</bean>
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource"/>
+		<property name="configLocation"
+			value="classpath:spring/web/ch04/config/SqlMapConfig.xml"/>
+		<property name="mapperLocations">
+			<array>
+				<value>classpath:spring/web/**/dao/mapper/**/*.xml</value>
+			</array>
+		</property>
+	</bean>
+	<mybatis:scan base-package="spring.web.**.dao.mapper"/>
+	
+	<!-- ch02:resource -->
+	<mvc:resources mapping="/img/**" location="/WEB-INF/resources/img/"/>
+	<mvc:resources mapping="/css/**" location="/WEB-INF/resources/css/"/>
+	<mvc:resources mapping="/js/**" location="/WEB-INF/resources/js/"/>
+	
+</beans>
